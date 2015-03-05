@@ -1,0 +1,35 @@
+with "florist";
+
+project CMlib is
+
+
+   for Main use ();
+   for Object_Dir use "obj";
+   for Source_Dirs use ("src");
+   for Languages use ("Ada");
+   for Library_Interface use ("src/cm.ads");
+
+   package Ide is
+      for Vcs_Kind use "Git";
+   end Ide;
+
+   package Builder is
+      for Default_Switches ("ada") use ("-j4", "-k", "-g", "-s");
+   end Builder;
+
+   package Compiler is
+
+
+    for Default_Switches ("ada") use ("-gnaty3bBcxtSOnaihelkr", "-gnato", "-fstack-check", "-g", "-gnatf", "-gnatwum", "-gnat12");
+
+   end Compiler;
+
+   package Linker is
+
+    for Default_Switches ("ada") use ("-g", "-lc");
+    for Linker_Options use ();
+
+   end Linker;
+
+end CMlib;
+
