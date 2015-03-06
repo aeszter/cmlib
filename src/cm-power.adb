@@ -5,11 +5,12 @@ with POSIX.IO;
 with Ada.Exceptions; use Ada.Exceptions;
 
 with CM.Debug;
+with CM.Taint;
 
 
-package body CM is
-   procedure Activate_Power_Switch (The_Node : String;
-                                    Command  : String;
+package body CM.Power is
+   procedure Activate_Power_Switch (The_Node : CM.Taint.Trusted_String;
+                                    Command  : CM.Taint.Trusted_String;
                                     PDU      : Boolean);
 
 
@@ -17,13 +18,14 @@ package body CM is
    -- Activate_Power_Switch --
    ---------------------------
 
-   procedure Activate_Power_Switch (The_Node : String;
-                                    Command  : String;
+   procedure Activate_Power_Switch (The_Node : CM.Taint.Trusted_String;
+                                    Command  : CM.Taint.Trusted_String;
                                     PDU      : Boolean) is
       Args         : POSIX.POSIX_String_List;
       cmsh_Command : constant String := "device power "
                                       & (if PDU then "-p" else "-n") & " "
-                                      & The_Node & " " & Command;
+                                      & CM.Taint.Value (The_Node) & " "
+                                      & CM.Taint.Value (Command);
       Template     : Process_Template;
       PID          : Process_ID;
       Return_Value : Termination_Status;
@@ -78,19 +80,19 @@ package body CM is
            & cmsh_Command & """:" & Exception_Information (E);
    end Activate_Power_Switch;
 
-   procedure Poweron (What : String; PDU : Boolean := False) is
+   procedure Poweron (What : CM.Taint.Trusted_String; PDU : Boolean := False) is
    begin
-      Activate_Power_Switch (What, "on", PDU);
+      Activate_Power_Switch (What, CM.Taint.Implicit_Trust ("on"), PDU);
    end Poweron;
 
-   procedure Poweroff (What : String; PDU : Boolean := False) is
+   procedure Poweroff (What : CM.Taint.Trusted_String; PDU : Boolean := False) is
    begin
-      Activate_Power_Switch (What, "off", PDU);
+      Activate_Power_Switch (What, CM.Taint.Implicit_Trust ("off"), PDU);
    end Poweroff;
 
-   procedure Powercycle (What : String; PDU : Boolean := False) is
+   procedure Powercycle (What : CM.Taint.Trusted_String; PDU : Boolean := False) is
    begin
-      Activate_Power_Switch (What, "reset", PDU);
+      Activate_Power_Switch (What, CM.Taint.Implicit_Trust ("reset"), PDU);
    end Powercycle;
 
-end CM;
+end CM.Power;
