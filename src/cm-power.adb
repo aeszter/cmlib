@@ -11,7 +11,8 @@ with CM.Taint;
 package body CM.Power is
    procedure Activate_Power_Switch (The_Node : CM.Taint.Trusted_String;
                                     Command  : CM.Taint.Trusted_String;
-                                    PDU      : Boolean);
+                                    PDU      : Boolean;
+                                    Sudo_User : CM.Taint.Trusted_String);
 
 
    ---------------------------
@@ -20,20 +21,27 @@ package body CM.Power is
 
    procedure Activate_Power_Switch (The_Node : CM.Taint.Trusted_String;
                                     Command  : CM.Taint.Trusted_String;
-                                    PDU      : Boolean) is
+                                    PDU      : Boolean;
+                                    Sudo_User : CM.Taint.Trusted_String) is
       Args         : POSIX.POSIX_String_List;
       cmsh_Command : constant String := "device power "
                                       & (if PDU then "-p" else "-n") & " "
-                                      & CM.Taint.Value (The_Node) & " "
+                                      & Strip_FQD (CM.Taint.Value (The_Node)) & " "
                                       & CM.Taint.Value (Command);
       Template     : Process_Template;
       PID          : Process_ID;
       Return_Value : Termination_Status;
+      Trusted_User : constant String := CM.Taint.Value (Sudo_User);
 
    begin
       begin
          Debug.Log (cmsh_Command);
-         Append (Args, "cmsh");
+         if Trusted_User /= "" then
+            Append (Args, "sudo");
+            Append (Args, "-u");
+            Append (Args, To_POSIX_String (Trusted_User));
+         end if;
+         Append (Args, "/cm/local/apps/cmd/bin/cmsh");
          Append (Args, "-c");
          Append (Args, To_POSIX_String (cmsh_Command));
          Open_Template (Template);
@@ -45,10 +53,11 @@ package body CM.Power is
             raise;
       end;
       begin
-         Start_Process_Search (Child    => PID,
-                               Template => Template,
-                               Filename => "cmsh",
-                               Arg_List => Args);
+         Start_Process (Child    => PID,
+                        Template => Template,
+                        Pathname => (if Trusted_User = "" then "/cm/local/apps/cmd/bin/cmsh"
+                                     else "/usr/bin/sudo"),
+                        Arg_List => Args);
       exception
          when others =>
             Debug.Log ("in cmsh start:");
@@ -80,19 +89,19 @@ package body CM.Power is
            & cmsh_Command & """:" & Exception_Information (E);
    end Activate_Power_Switch;
 
-   procedure Poweron (What : CM.Taint.Trusted_String; PDU : Boolean := False) is
+   procedure Poweron (What : CM.Taint.Trusted_String; PDU : Boolean := False; Sudo_User : CM.Taint.Trusted_String := CM.Taint.Implicit_Trust ("")) is
    begin
-      Activate_Power_Switch (What, CM.Taint.Implicit_Trust ("on"), PDU);
+      Activate_Power_Switch (What, CM.Taint.Implicit_Trust ("on"), PDU, Sudo_User);
    end Poweron;
 
-   procedure Poweroff (What : CM.Taint.Trusted_String; PDU : Boolean := False) is
+   procedure Poweroff (What : CM.Taint.Trusted_String; PDU : Boolean := False; Sudo_User : CM.Taint.Trusted_String := CM.Taint.Implicit_Trust ("")) is
    begin
-      Activate_Power_Switch (What, CM.Taint.Implicit_Trust ("off"), PDU);
+      Activate_Power_Switch (What, CM.Taint.Implicit_Trust ("off"), PDU, Sudo_User);
    end Poweroff;
 
-   procedure Powercycle (What : CM.Taint.Trusted_String; PDU : Boolean := False) is
+   procedure Powercycle (What : CM.Taint.Trusted_String; PDU : Boolean := False; Sudo_User : CM.Taint.Trusted_String := CM.Taint.Implicit_Trust ("")) is
    begin
-      Activate_Power_Switch (What, CM.Taint.Implicit_Trust ("reset"), PDU);
+      Activate_Power_Switch (What, CM.Taint.Implicit_Trust ("reset"), PDU, Sudo_User);
    end Powercycle;
 
 end CM.Power;
