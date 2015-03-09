@@ -6,6 +6,8 @@ with Ada.Exceptions; use Ada.Exceptions;
 
 with CM.Debug;
 with CM.Taint;
+with Ada.Strings;
+with Ada.Strings.Fixed;
 
 
 package body CM.Power is
@@ -13,6 +15,8 @@ package body CM.Power is
                                     Command  : CM.Taint.Trusted_String;
                                     PDU      : Boolean;
                                     Sudo_User : CM.Taint.Trusted_String);
+
+   function Strip_FQD (FQDN : String) return String;
 
 
    ---------------------------
@@ -103,5 +107,15 @@ package body CM.Power is
    begin
       Activate_Power_Switch (What, CM.Taint.Implicit_Trust ("reset"), PDU, Sudo_User);
    end Powercycle;
+
+   function Strip_FQD (FQDN : String) return String is
+      Dot : Natural := Ada.Strings.Fixed.Index (FQDN, ".");
+   begin
+      if Dot /= 0 then
+         return FQDN (FQDN'First .. Dot - 1);
+      else
+         return FQDN;
+      end if;
+   end Strip_FQD;
 
 end CM.Power;
