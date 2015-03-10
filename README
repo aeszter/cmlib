@@ -1,0 +1,23 @@
+cmlib
+======
+
+An Ada frontend to Bright Cluster Manager
+
+By Ansgar Esztermann <aeszter@mpibpc.mpg.de>
+
+1. Goal
+This library began its life as part of Lightsout (by the same author).
+When Qview started acquiring active features (versions 2.x an earlier
+were passive monitors only), an interface to the cluster manager
+seemed promising. Thus, the necessary routines have been extracted
+from Lightsout.
+
+2. Requirements
+The following libraries are needed:
+
+  * Florist (POSIX API)
+
+Of course, a working Bright Cluster Manager installation is also necessary.
+
+3. Shortcomings/Bugs
+For an up-to-date list of bugs, see the issue tracker on GitHub.
